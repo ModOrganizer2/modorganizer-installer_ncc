@@ -34,6 +34,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtPlugin>
 
 
+using namespace MOBase;
+
+
 InstallerNCC::InstallerNCC()
 {
 }
@@ -131,7 +134,7 @@ const wchar_t *InstallerNCC::gameShortName(IGameInfo::Type gameType) const
 }
 
 
-IPluginInstaller::EInstallResult InstallerNCC::install(QString &modName, const QString &archiveName)
+IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &modName, const QString &archiveName)
 {
   IModInterface *modInterface = m_MOInfo->createMod(modName);
 
@@ -203,16 +206,31 @@ IPluginInstaller::EInstallResult InstallerNCC::install(QString &modName, const Q
   ::CloseHandle(execInfo.hProcess);
 
   if ((exitCode == 0) || (exitCode == 10)) { // 0 = success, 10 = incomplete installation
+    bool errorOccured = false;
     { // move all installed files from the data directory one directory up
-      QDirIterator dirIter(QDir(modInterface->absolutePath()).absoluteFilePath("Data"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+      QDir targetDir(modInterface->absolutePath());
+      QDirIterator dirIter(targetDir.absoluteFilePath("Data"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+
       bool hasFiles = false;
+
       while (dirIter.hasNext()) {
         dirIter.next();
         QFileInfo fileInfo = dirIter.fileInfo();
+        QString newName = targetDir.absoluteFilePath(fileInfo.fileName());
+        if (fileInfo.isFile() && QFile::exists(newName)) {
+          if (!QFile::remove(newName)) {
+            qCritical("failed to overwrite %s", qPrintable(newName));
+            errorOccured = true;
+          }
+        } // if it's a directory and the target exists that isn't really a problem
 
-        QDir dir(fileInfo.absolutePath());
-        dir.cdUp();
-        QFile::rename(fileInfo.absoluteFilePath(), dir.absoluteFilePath(fileInfo.fileName()));
+        if (!QFile::rename(fileInfo.absoluteFilePath(), newName)) {
+          // moving doesn't work when merging
+          if (!copyDir(fileInfo.absoluteFilePath(), newName, true)) {
+            qCritical("failed to move %s to %s", qPrintable(fileInfo.absoluteFilePath()), qPrintable(newName));
+            errorOccured = true;
+          }
+        }
         hasFiles = true;
       }
       // recognition of canceled installation in the external installer is broken so we assume the installation was
@@ -225,6 +243,10 @@ IPluginInstaller::EInstallResult InstallerNCC::install(QString &modName, const Q
     QString dataDir = modInterface->absolutePath() + "/Data";
     if (!removeDir(dataDir)) {
       qCritical("failed to remove data directory from %s", qPrintable(dataDir));
+      errorOccured = true;
+    }
+    if (errorOccured) {
+      reportError(tr("Finalization of the installation failed. The mod may or may not work correctly. See mo_interface.log for details"));
     }
   } else if (exitCode != 11) { // 11 = manually canceled
     reportError(tr("installation failed (errorcode %1)").arg(exitCode));
