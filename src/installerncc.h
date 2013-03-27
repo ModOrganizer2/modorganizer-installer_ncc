@@ -25,10 +25,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iplugindiagnose.h>
 
 
-class InstallerNCC : public IPluginInstallerCustom, public IPluginDiagnose
+class InstallerNCC : public MOBase::IPluginInstallerCustom, public MOBase::IPluginDiagnose
 {
   Q_OBJECT
-  Q_INTERFACES(IPlugin IPluginInstaller IPluginInstallerCustom IPluginDiagnose)
+  Q_INTERFACES(MOBase::IPlugin MOBase::IPluginInstaller MOBase::IPluginInstallerCustom MOBase::IPluginDiagnose)
 
 public:
 
@@ -36,25 +36,25 @@ public:
 
 public: // IPlugin
 
-  virtual bool init(IOrganizer *moInfo);
+  virtual bool init(MOBase::IOrganizer *moInfo);
   virtual QString name() const;
   virtual QString author() const;
   virtual QString description() const;
-  virtual VersionInfo version() const;
+  virtual MOBase::VersionInfo version() const;
   virtual bool isActive() const;
-  virtual QList<PluginSetting> settings() const;
+  virtual QList<MOBase::PluginSetting> settings() const;
 
 public: // IPluginInstaller
 
   virtual unsigned int priority() const;
   virtual bool isManualInstaller() const;
-  virtual bool isArchiveSupported(const DirectoryTree &tree) const;
+  virtual bool isArchiveSupported(const MOBase::DirectoryTree &tree) const;
 
 public: // IPluginInstallerCustom
 
   virtual std::set<QString> supportedExtensions() const;
   virtual bool isArchiveSupported(const QString &archiveName) const;
-  virtual EInstallResult install(QString &modName, const QString &archiveName);
+  virtual EInstallResult install(MOBase::GuessedValue<QString> &modName, const QString &archiveName);
 
 public: // IPluginDiagnose
 
@@ -66,7 +66,7 @@ public: // IPluginDiagnose
 
 private:
 
-  const wchar_t *gameShortName(IGameInfo::Type gameType) const;
+  const wchar_t *gameShortName(MOBase::IGameInfo::Type gameType) const;
   bool isNCCInstalled() const;  
   bool isNCCCompatible() const;
   QString nccPath() const;
@@ -80,7 +80,7 @@ private:
 
 private:
 
-  IOrganizer *m_MOInfo;
+  MOBase::IOrganizer *m_MOInfo;
 
 };
 
