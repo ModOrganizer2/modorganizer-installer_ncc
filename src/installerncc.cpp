@@ -134,6 +134,22 @@ const wchar_t *InstallerNCC::gameShortName(IGameInfo::Type gameType) const
 }
 
 
+static BOOL CALLBACK BringToFront(HWND hwnd, LPARAM lParam)
+{
+  DWORD procid;
+
+  GetWindowThreadProcessId(hwnd, &procid);
+
+  if (procid == static_cast<DWORD>(lParam)) {
+    ::SetForegroundWindow(hwnd);
+    ::SetLastError(NOERROR);
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
+
+
 IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &modName, const QString &archiveName)
 {
   IModInterface *modInterface = m_MOInfo->createMod(modName);
@@ -151,10 +167,25 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
 
   // NCC assumes the installation directory is the game directory and may try to access the binary to determine version information
-  QString binaryDestination = modInterface->absolutePath() + "/" + m_MOInfo->gameInfo().binaryName();
-  shellCopy(m_MOInfo->gameInfo().path() + "/" + m_MOInfo->gameInfo().binaryName(), binaryDestination);
-  //QFile::copy(m_MOInfo->gameInfo().path() + "/" + m_MOInfo->gameInfo().binaryName(), binaryDestination);
-  ON_BLOCK_EXIT([&binaryDestination] { QFile::remove(binaryDestination); } );
+  QStringList copiedFiles;
+  QStringList patterns;
+  patterns.append(QDir::fromNativeSeparators(m_MOInfo->gameInfo().binaryName()));
+  patterns.append("*se_loader.exe");
+  QDirIterator iter(QDir::fromNativeSeparators(m_MOInfo->gameInfo().path()), patterns);
+  QDir modDir(modInterface->absolutePath());
+  while (iter.hasNext()) {
+    iter.next();
+    QString destination = modDir.absoluteFilePath(iter.fileInfo().fileName());
+    if (QFile::copy(iter.fileInfo().absoluteFilePath(), destination)) {
+      copiedFiles.append(destination);
+    }
+  }
+  ON_BLOCK_EXIT([&copiedFiles] {
+    if (!shellDelete(copiedFiles, NULL)) {
+      reportError(QObject::tr("Failed to clean up after NCC installation, you may find some files "
+                     "unrelated to the mod in the newly created mod directory: %1").arg(windowsErrorString(::GetLastError())));
+    }
+  });
 
   SHELLEXECUTEINFOW execInfo = {0};
   execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
@@ -176,9 +207,17 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   busyDialog.setWindowModality(Qt::WindowModal);
   bool confirmCancel = false;
   busyDialog.show();
+
   bool finished = false;
+  DWORD procid = ::GetProcessId(execInfo.hProcess);
+  bool inFront = false;
   while (true) {
     QCoreApplication::processEvents();
+    if (!inFront) {
+      if (!::EnumWindows(BringToFront, procid) && (::GetLastError() == NOERROR)) {
+        inFront = true;
+      }
+    }
     DWORD res = ::WaitForSingleObject(execInfo.hProcess, 100);
     if (res == WAIT_OBJECT_0) {
       finished = true;
