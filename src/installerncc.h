@@ -69,6 +69,7 @@ private:
   const wchar_t *gameShortName(MOBase::IGameInfo::Type gameType) const;
   bool isNCCInstalled() const;  
   bool isNCCCompatible() const;
+  bool isDotNetInstalled() const;
   QString nccPath() const;
 
 private:
@@ -77,6 +78,7 @@ private:
 
   static const unsigned int PROBLEM_NCCMISSING = 1;
   static const unsigned int PROBLEM_NCCINCOMPATIBLE = 2;
+  static const unsigned int PROBLEM_DOTNETINSTALLED = 3;
 
 private:
 

@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDirIterator>
 #include <QCoreApplication>
 #include <QProgressDialog>
+#include <QSettings>
 #include <QtPlugin>
 
 
@@ -336,6 +337,12 @@ bool InstallerNCC::isNCCCompatible() const
   return (temp->dwFileVersionMS & 0xFFFFFF) == COMPATIBLE_MAJOR_VERSION;
 }
 
+bool InstallerNCC::isDotNetInstalled() const
+{
+  return QSettings("HKEY_LOCAL_MACHINE\\Software\\Microsoft\\NET Framework Setup\\NDP\\v3.5",
+                   QSettings::NativeFormat).value("Install", 0) != 1;
+}
+
 QString InstallerNCC::nccPath() const
 {
   return QCoreApplication::applicationDirPath() + "/NCC/NexusClientCLI.exe";
@@ -350,6 +357,8 @@ std::vector<unsigned int> InstallerNCC::activeProblems() const
     result.push_back(PROBLEM_NCCMISSING);
   } else if (!isNCCCompatible()) {
     result.push_back(PROBLEM_NCCINCOMPATIBLE);
+  } else if (!isDotNetInstalled()) {
+    result.push_back(PROBLEM_DOTNETINSTALLED);
   }
 
   return result;
@@ -359,9 +368,11 @@ QString InstallerNCC::shortDescription(unsigned int key) const
 {
   switch (key) {
     case PROBLEM_NCCMISSING:
-      return tr("NCC is not installed. You won't be able to install some scripted mod-installers.");
+      return tr("NCC is not installed.");
     case PROBLEM_NCCINCOMPATIBLE:
-      return tr("NCC Vrsion may be incompatible.");
+      return tr("NCC Version may be incompatible.");
+    case PROBLEM_DOTNETINSTALLED:
+      return tr("dotNet is not installed or outdated.");
     default:
       throw MyException(tr("invalid problem key %1").arg(key));
   }
@@ -371,10 +382,15 @@ QString InstallerNCC::fullDescription(unsigned int key) const
 {
   switch (key) {
     case PROBLEM_NCCMISSING:
-      return tr("NCC is not installed. You won't be able to install some scripted mod-installers."
-                "Get NCC from <a href=\"http://skyrim.nexusmods.com/downloads/file.php?id=1334\">the MO page on nexus</a>");
+      return tr("NCC is not installed. You won't be able to install some scripted mod-installers. "
+                "Get NCC from <a href=\"http://skyrim.nexusmods.com/downloads/file.php?id=1334\">the MO page on nexus</a>.");
     case PROBLEM_NCCINCOMPATIBLE:
       return tr("NCC version may be incompatible, expected version %1.x.x.x.").arg(COMPATIBLE_MAJOR_VERSION);
+    case PROBLEM_DOTNETINSTALLED: {
+      QString dotNetUrl = "http://www.microsoft.com/en-us/download/details.aspx?id=17851";
+      return tr("<li>dotNet is not installed or outdated. This is required to use NCC. "
+                "Get it from here: <a href=\"%1\">%1</a></li>").arg(dotNetUrl);
+    } break;
     default:
       throw MyException(tr("invalid problem key %1").arg(key));
   }
