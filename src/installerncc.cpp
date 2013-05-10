@@ -158,7 +158,8 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   wchar_t binary[MAX_PATH];
   wchar_t parameters[1024]; // maximum: 2xMAX_PATH + approx 20 characters
   wchar_t currentDirectory[MAX_PATH];
-
+#pragma warning( push )
+#pragma warning( disable : 4996 )
   _snwprintf(binary, MAX_PATH, L"%ls", ToWString(QDir::toNativeSeparators(nccPath())).c_str());
   _snwprintf(parameters, 1024, L"-g %ls -p \"%ls\" -i \"%ls\" \"%ls\"",
              gameShortName(m_MOInfo->gameInfo().type()),
@@ -166,6 +167,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
              ToWString(QDir::toNativeSeparators(archiveName)).c_str(),
              ToWString(QDir::toNativeSeparators(modInterface->absolutePath())).c_str());
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
+#pragma warning( pop )
 
   // NCC assumes the installation directory is the game directory and may try to access the binary to determine version information
   QStringList copiedFiles;
@@ -183,7 +185,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   }
   ON_BLOCK_EXIT([&copiedFiles] {
     if (!shellDelete(copiedFiles, NULL)) {
-      reportError(QObject::tr("Failed to clean up after NCC installation, you may find some files "
+      reportError(QString("Failed to clean up after NCC installation, you may find some files "
                      "unrelated to the mod in the newly created mod directory: %1").arg(windowsErrorString(::GetLastError())));
     }
   });
