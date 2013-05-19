@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDirIterator>
 #include <QCoreApplication>
 #include <QProgressDialog>
+#include <QSettings>
 #include <QtPlugin>
 
 
@@ -163,7 +164,8 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   wchar_t binary[MAX_PATH];
   wchar_t parameters[1024]; // maximum: 2xMAX_PATH + approx 20 characters
   wchar_t currentDirectory[MAX_PATH];
-
+#pragma warning( push )
+#pragma warning( disable : 4996 )
   _snwprintf(binary, MAX_PATH, L"%ls", ToWString(QDir::toNativeSeparators(nccPath())).c_str());
   _snwprintf(parameters, 1024, L"-g %ls -p \"%ls\" -i \"%ls\" \"%ls\"",
              gameShortName(m_MOInfo->gameInfo().type()),
@@ -171,6 +173,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
              ToWString(QDir::toNativeSeparators(archiveName)).c_str(),
              ToWString(QDir::toNativeSeparators(modInterface->absolutePath())).c_str());
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
+#pragma warning( pop )
 
   // NCC assumes the installation directory is the game directory and may try to access the binary to determine version information
   QStringList copiedFiles;
@@ -188,7 +191,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   }
   ON_BLOCK_EXIT([&copiedFiles] {
     if (!shellDelete(copiedFiles, NULL)) {
-      reportError(QObject::tr("Failed to clean up after NCC installation, you may find some files "
+      reportError(QString("Failed to clean up after NCC installation, you may find some files "
                      "unrelated to the mod in the newly created mod directory: %1").arg(windowsErrorString(::GetLastError())));
     }
   });
@@ -342,6 +345,12 @@ bool InstallerNCC::isNCCCompatible() const
   return (temp->dwFileVersionMS & 0xFFFFFF) == COMPATIBLE_MAJOR_VERSION;
 }
 
+bool InstallerNCC::isDotNetInstalled() const
+{
+  return QSettings("HKEY_LOCAL_MACHINE\\Software\\Microsoft\\NET Framework Setup\\NDP\\v3.5",
+                   QSettings::NativeFormat).value("Install", 0) != 1;
+}
+
 QString InstallerNCC::nccPath() const
 {
   return QCoreApplication::applicationDirPath() + "/NCC/NexusClientCLI.exe";
@@ -356,6 +365,8 @@ std::vector<unsigned int> InstallerNCC::activeProblems() const
     result.push_back(PROBLEM_NCCMISSING);
   } else if (!isNCCCompatible()) {
     result.push_back(PROBLEM_NCCINCOMPATIBLE);
+  } else if (!isDotNetInstalled()) {
+    result.push_back(PROBLEM_DOTNETINSTALLED);
   }
 
   return result;
@@ -365,9 +376,11 @@ QString InstallerNCC::shortDescription(unsigned int key) const
 {
   switch (key) {
     case PROBLEM_NCCMISSING:
-      return tr("NCC is not installed. You won't be able to install some scripted mod-installers.");
+      return tr("NCC is not installed.");
     case PROBLEM_NCCINCOMPATIBLE:
-      return tr("NCC Vrsion may be incompatible.");
+      return tr("NCC Version may be incompatible.");
+    case PROBLEM_DOTNETINSTALLED:
+      return tr("dotNet is not installed or outdated.");
     default:
       throw MyException(tr("invalid problem key %1").arg(key));
   }
@@ -377,10 +390,15 @@ QString InstallerNCC::fullDescription(unsigned int key) const
 {
   switch (key) {
     case PROBLEM_NCCMISSING:
-      return tr("NCC is not installed. You won't be able to install some scripted mod-installers."
-                "Get NCC from <a href=\"http://skyrim.nexusmods.com/downloads/file.php?id=1334\">the MO page on nexus</a>");
+      return tr("NCC is not installed. You won't be able to install some scripted mod-installers. "
+                "Get NCC from <a href=\"http://skyrim.nexusmods.com/downloads/file.php?id=1334\">the MO page on nexus</a>.");
     case PROBLEM_NCCINCOMPATIBLE:
       return tr("NCC version may be incompatible, expected version %1.x.x.x.").arg(COMPATIBLE_MAJOR_VERSION);
+    case PROBLEM_DOTNETINSTALLED: {
+      QString dotNetUrl = "http://www.microsoft.com/en-us/download/details.aspx?id=17851";
+      return tr("<li>dotNet is not installed or outdated. This is required to use NCC. "
+                "Get it from here: <a href=\"%1\">%1</a></li>").arg(dotNetUrl);
+    } break;
     default:
       throw MyException(tr("invalid problem key %1").arg(key));
   }
