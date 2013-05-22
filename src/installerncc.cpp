@@ -184,7 +184,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
     }
   }
   ON_BLOCK_EXIT([&copiedFiles] {
-    if (!shellDelete(copiedFiles, NULL)) {
+    if (!shellDelete(copiedFiles)) {
       reportError(QString("Failed to clean up after NCC installation, you may find some files "
                      "unrelated to the mod in the newly created mod directory: %1").arg(windowsErrorString(::GetLastError())));
     }
@@ -255,7 +255,6 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
       QDirIterator dirIter(targetDir.absoluteFilePath("Data"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
 
       bool hasFiles = false;
-
       while (dirIter.hasNext()) {
         dirIter.next();
         QFileInfo fileInfo = dirIter.fileInfo();
@@ -279,12 +278,13 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
       // recognition of canceled installation in the external installer is broken so we assume the installation was
       // canceled if no files were installed
       if (!hasFiles) {
+        qDebug("no files in installed mod");
         exitCode = 11;
       }
     }
 
     QString dataDir = modInterface->absolutePath() + "/Data";
-    if (!shellDelete(QStringList(dataDir), parentWidget())) {
+    if (!shellDelete(QStringList(dataDir), false, parentWidget())) {
       qCritical("failed to remove data directory from %s", qPrintable(dataDir));
       errorOccured = true;
     }
@@ -298,8 +298,11 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   if ((exitCode == 0) || (exitCode == 10)) {
     return RESULT_SUCCESS;
   } else {
-    if (!m_MOInfo->removeMod(modInterface)) {
+    if (!modInterface->remove()) {
       qCritical("failed to remove empty mod %s", qPrintable(modInterface->absolutePath()));
+    } else {
+      // ensure the installer doesn't try to remove the files again
+      copiedFiles.clear();
     }
     return RESULT_FAILED;
   }
@@ -342,7 +345,7 @@ bool InstallerNCC::isNCCCompatible() const
 bool InstallerNCC::isDotNetInstalled() const
 {
   return QSettings("HKEY_LOCAL_MACHINE\\Software\\Microsoft\\NET Framework Setup\\NDP\\v3.5",
-                   QSettings::NativeFormat).value("Install", 0) != 1;
+                   QSettings::NativeFormat).value("Install", 0) == 1;
 }
 
 QString InstallerNCC::nccPath() const
