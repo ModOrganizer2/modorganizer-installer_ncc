@@ -102,7 +102,13 @@ bool InstallerNCC::isArchiveSupported(const DirectoryTree &tree) const
        iter != tree.nodesEnd(); ++iter) {
     const QString &dirName = (*iter)->getData().name;
     if (dirName.compare("fomod", Qt::CaseInsensitive) == 0) {
-      return true;
+      for (DirectoryTree::const_leaf_iterator fileIter = (*iter)->leafsBegin();
+           fileIter != (*iter)->leafsEnd(); ++fileIter) {
+        if ((fileIter->getName().compare("ModuleConfig.xml", Qt::CaseInsensitive) == 0) ||
+            (fileIter->getName().compare("script.cs", Qt::CaseInsensitive) == 0)) {
+          return true;
+        }
+      }
     }
   }
 
