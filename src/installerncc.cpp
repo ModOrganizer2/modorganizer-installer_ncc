@@ -157,10 +157,8 @@ static BOOL CALLBACK BringToFront(HWND hwnd, LPARAM lParam)
 }
 
 
-IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &modName, const QString &archiveName)
+IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInterface, const QString &archiveName)
 {
-  IModInterface *modInterface = m_MOInfo->createMod(modName);
-
   wchar_t binary[MAX_PATH];
   wchar_t parameters[1024]; // maximum: 2xMAX_PATH + approx 20 characters
   wchar_t currentDirectory[MAX_PATH];
@@ -213,6 +211,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
 
   QProgressDialog busyDialog(tr("Running external installer.\nNote: This installer will not be aware of other installed mods!"),
                              tr("Force Close"), 0, 0, parentWidget());
+  busyDialog.setWindowFlags(busyDialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
   busyDialog.setWindowModality(Qt::WindowModal);
   bool confirmCancel = false;
   busyDialog.show();
@@ -301,17 +300,49 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
     reportError(tr("installation failed (errorcode %1)").arg(exitCode));
   }
 
-  if ((exitCode == 0) || (exitCode == 10)) {
-    return RESULT_SUCCESS;
+  return ((exitCode == 0) || (exitCode == 10)) ? RESULT_SUCCESS : RESULT_FAILED;
+}
+
+
+IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &modName, const QString &archiveName,
+                                                       const QString &version, int modID)
+{
+  IModInterface *modInterface = m_MOInfo->createMod(modName);
+  modInterface->setVersion(version);
+  modInterface->setNexusID(modID);
+
+  EInstallResult res = invokeNCC(modInterface, archiveName);
+
+  if (res == RESULT_SUCCESS) {
+    // post process mod directory
+    QFile file(modInterface->absolutePath() + "/__installInfo.txt");
+    if (file.open(QIODevice::ReadOnly)) {
+      QStringList data = QString(file.readAll()).split("\n");
+      file.close();
+      QFile::remove(modInterface->absolutePath() + "/__installInfo.txt");
+      if (data.count() == 3) {
+        modName.update(data.at(0), GUESS_META);
+        QString newName = modName;
+        if ((QString::compare(modName, modInterface->name(), Qt::CaseInsensitive) != 0) &&
+            (m_MOInfo->getMod(newName) == NULL)) {
+          modInterface->setName(modName);
+        }
+        if (data.at(1).length() > 0) {
+          modInterface->setVersion(data.at(1));
+        }
+        if (data.at(2).length() > 0) {
+          modInterface->setNexusID(data.at(2).toInt());
+        }
+      }
+    }
+
   } else {
     if (!modInterface->remove()) {
       qCritical("failed to remove empty mod %s", qPrintable(modInterface->absolutePath()));
-    } else {
-      // ensure the installer doesn't try to remove the files again
-      copiedFiles.clear();
     }
-    return RESULT_FAILED;
   }
+
+  return res;
 }
 
 bool InstallerNCC::isNCCInstalled() const

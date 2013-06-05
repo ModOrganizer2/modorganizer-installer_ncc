@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iplugininstallercustom.h>
 #include <iplugindiagnose.h>
+#include <QXmlStreamReader>
 
 
 class InstallerNCC : public MOBase::IPluginInstallerCustom, public MOBase::IPluginDiagnose
@@ -54,7 +55,8 @@ public: // IPluginInstallerCustom
 
   virtual std::set<QString> supportedExtensions() const;
   virtual bool isArchiveSupported(const QString &archiveName) const;
-  virtual EInstallResult install(MOBase::GuessedValue<QString> &modName, const QString &archiveName);
+  virtual EInstallResult install(MOBase::GuessedValue<QString> &modName, const QString &archiveName,
+                                 const QString &version, int modID);
 
 public: // IPluginDiagnose
 
@@ -71,6 +73,8 @@ private:
   bool isNCCCompatible() const;
   bool isDotNetInstalled() const;
   QString nccPath() const;
+
+  IPluginInstaller::EInstallResult invokeNCC(MOBase::IModInterface *modInterface, const QString &archiveName);
 
 private:
 
