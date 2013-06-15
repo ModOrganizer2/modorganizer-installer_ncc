@@ -30,6 +30,9 @@ class InstallerNCC : public MOBase::IPluginInstallerCustom, public MOBase::IPlug
 {
   Q_OBJECT
   Q_INTERFACES(MOBase::IPlugin MOBase::IPluginInstaller MOBase::IPluginInstallerCustom MOBase::IPluginDiagnose)
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+  Q_PLUGIN_METADATA(IID "org.tannin.InstallerNCC" FILE "installerncc.json")
+#endif
 
 public:
 
@@ -78,7 +81,7 @@ private:
 
 private:
 
-  static const unsigned int COMPATIBLE_MAJOR_VERSION = 0x02;
+  static const unsigned int COMPATIBLE_MAJOR_VERSION = 0x03;
 
   static const unsigned int PROBLEM_NCCMISSING = 1;
   static const unsigned int PROBLEM_NCCINCOMPATIBLE = 2;

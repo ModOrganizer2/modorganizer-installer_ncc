@@ -7,6 +7,10 @@
 TARGET = installerNCC
 TEMPLATE = lib
 
+contains(QT_VERSION, "^5.*") {
+  QT += widgets
+}
+
 CONFIG += plugins
 CONFIG += dll
 
@@ -22,3 +26,6 @@ LIBS += -lVersion
 # -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion
 
 include(../plugin_template.pri)
+
+OTHER_FILES += \
+    installerncc.json

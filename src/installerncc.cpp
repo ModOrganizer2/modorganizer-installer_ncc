@@ -427,7 +427,7 @@ QString InstallerNCC::fullDescription(unsigned int key) const
       return tr("NCC is not installed. You won't be able to install some scripted mod-installers. "
                 "Get NCC from <a href=\"http://skyrim.nexusmods.com/downloads/file.php?id=1334\">the MO page on nexus</a>.");
     case PROBLEM_NCCINCOMPATIBLE:
-      return tr("NCC version may be incompatible, expected version %1.x.x.x.").arg(COMPATIBLE_MAJOR_VERSION);
+      return tr("NCC version may be incompatible, expected version 0.%1.x.x.").arg(COMPATIBLE_MAJOR_VERSION);
     case PROBLEM_DOTNETINSTALLED: {
       QString dotNetUrl = "http://www.microsoft.com/en-us/download/details.aspx?id=17851";
       return tr("<li>dotNet is not installed or outdated. This is required to use NCC. "
@@ -448,5 +448,6 @@ void InstallerNCC::startGuidedFix(unsigned int key) const
   throw MyException(tr("invalid problem key %1").arg(key));
 }
 
-
+#if QT_VERSION < QT_VERSION_CHECK(5,0,0)
 Q_EXPORT_PLUGIN2(installerNCC, InstallerNCC)
+#endif
