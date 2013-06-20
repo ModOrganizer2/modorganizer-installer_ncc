@@ -209,7 +209,9 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
     return RESULT_FAILED;
   }
 
-  QProgressDialog busyDialog(tr("Running external installer.\nNote: This installer will not be aware of other installed mods!"),
+  QProgressDialog busyDialog(tr("Running external installer.\n"
+                                "Note: This installer will not be aware of other installed mods!\n\n"
+                                "Based on Nexus Mod Manager by Black Tree Gaming Ltd.\n"),
                              tr("Force Close"), 0, 0, parentWidget());
   busyDialog.setWindowFlags(busyDialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
   busyDialog.setWindowModality(Qt::WindowModal);
