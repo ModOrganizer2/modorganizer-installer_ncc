@@ -70,7 +70,7 @@ VersionInfo InstallerNCC::version() const
 
 bool InstallerNCC::isActive() const
 {
-  return isNCCInstalled();
+  return isDotNetInstalled() && isNCCInstalled();
 }
 
 QList<PluginSetting> InstallerNCC::settings() const
@@ -432,7 +432,7 @@ QString InstallerNCC::fullDescription(unsigned int key) const
       return tr("NCC version may be incompatible, expected version 0.%1.x.x.").arg(COMPATIBLE_MAJOR_VERSION);
     case PROBLEM_DOTNETINSTALLED: {
       QString dotNetUrl = "http://www.microsoft.com/en-us/download/details.aspx?id=17851";
-      return tr("<li>dotNet is not installed or outdated. This is required to use NCC. "
+      return tr("<li>dotNet is not installed or the wrong version. This is required to use NCC. "
                 "Get it from here: <a href=\"%1\">%1</a></li>").arg(dotNetUrl);
     } break;
     default:
