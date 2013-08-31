@@ -310,6 +310,9 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
                                                        const QString &version, int modID)
 {
   IModInterface *modInterface = m_MOInfo->createMod(modName);
+  if (modInterface == NULL) {
+    return RESULT_CANCELED;
+  }
   modInterface->setVersion(version);
   modInterface->setNexusID(modID);
 
