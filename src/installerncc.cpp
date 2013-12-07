@@ -430,7 +430,7 @@ QString InstallerNCC::fullDescription(unsigned int key) const
   switch (key) {
     case PROBLEM_NCCMISSING:
       return tr("NCC is not installed. You won't be able to install some scripted mod-installers. "
-                "Get NCC from <a href=\"http://skyrim.nexusmods.com/downloads/file.php?id=1334\">the MO page on nexus</a>.");
+                "Get NCC from <a href=\"http://www.nexusmods.com/skyrim/mods/1334\">the MO page on nexus</a>.");
     case PROBLEM_NCCINCOMPATIBLE:
       return tr("NCC version may be incompatible, expected version 0.%1.x.x.").arg(COMPATIBLE_MAJOR_VERSION);
     case PROBLEM_DOTNETINSTALLED: {
