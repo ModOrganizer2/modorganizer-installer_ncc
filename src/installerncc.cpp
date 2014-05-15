@@ -141,18 +141,36 @@ const wchar_t *InstallerNCC::gameShortName(IGameInfo::Type gameType) const
 }
 
 
+// http://www.shloemi.com/2012/09/solved-setforegroundwindow-win32-api-not-always-works/
+static void ForceWindowVisible(HWND hwnd)
+{
+  DWORD foregroundThread = ::GetWindowThreadProcessId(::GetForegroundWindow(), NULL);
+  DWORD currentThread = ::GetCurrentThreadId();
+
+  if (foregroundThread != currentThread) {
+    ::AttachThreadInput(foregroundThread, currentThread, true);
+    ::BringWindowToTop(hwnd);
+    ::ShowWindow(hwnd, SW_SHOW);
+    ::AttachThreadInput(foregroundThread, currentThread, false);
+  } else {
+    ::BringWindowToTop(hwnd);
+    ::ShowWindow(hwnd, SW_SHOW);
+  }
+}
+
+
 static BOOL CALLBACK BringToFront(HWND hwnd, LPARAM lParam)
 {
   DWORD procid;
 
   GetWindowThreadProcessId(hwnd, &procid);
+  ::SetLastError(ERROR_HANDLE_EOF);
   if ((procid == static_cast<DWORD>(lParam)) && IsWindowVisible(hwnd)) {
-    ::SetForegroundWindow(hwnd);
+    ForceWindowVisible(hwnd);
     ::SetLastError(NOERROR);
-    return FALSE;
-  } else {
-    return TRUE;
+    return false;
   }
+  return TRUE;
 }
 
 
