@@ -19,7 +19,6 @@ CONFIG(release, debug|release) {
 
 DEFINES += INSTALLERNCC_LIBRARY
 
-INCLUDEPATH += "$(BOOSTPATH)"
 
 SOURCES += installerncc.cpp
 
@@ -29,6 +28,8 @@ LIBS += -lVersion
 # -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion
 
 include(../plugin_template.pri)
+
+INCLUDEPATH += "$${BOOSTPATH}"
 
 OTHER_FILES += \
     installerncc.json

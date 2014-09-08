@@ -50,7 +50,7 @@ bool InstallerNCC::init(IOrganizer *moInfo)
 
 QString InstallerNCC::name() const
 {
-  return tr("Fomod Installer (external)");
+  return "Fomod Installer (external)";
 }
 
 QString InstallerNCC::author() const
