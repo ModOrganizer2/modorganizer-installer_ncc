@@ -39,6 +39,7 @@ using namespace MOBase;
 
 
 InstallerNCC::InstallerNCC()
+  : m_MOInfo(NULL)
 {
 }
 
