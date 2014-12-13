@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <boost/assign.hpp>
 #include <boost/scoped_array.hpp>
+#include <boost/format.hpp>
 
 #include <QFile>
 #include <QDir>
@@ -36,6 +37,33 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 using namespace MOBase;
+
+
+
+
+VS_FIXEDFILEINFO getFileVersionInfo(const QString &path)
+{
+  std::wstring nameW = ToWString(QDir::toNativeSeparators(path));
+
+  DWORD size = ::GetFileVersionInfoSizeW(nameW.c_str(), NULL);
+  if (size == 0) {
+    throw std::runtime_error("failed to determine file version info size");
+  }
+
+  boost::scoped_array<char> buffer(new char[size]);
+
+  if (!::GetFileVersionInfoW(nameW.c_str(), 0UL, size, buffer.get())) {
+    throw std::runtime_error("failed to determine file version info");
+  }
+
+  void *versionInfoPtr = NULL;
+  UINT versionInfoLength = 0;
+  if (!::VerQueryValue(buffer.get(), L"\\", &versionInfoPtr, &versionInfoLength)) {
+    throw std::runtime_error("failed to determine file version");
+  }
+  return *(VS_FIXEDFILEINFO*)versionInfoPtr;
+}
+
 
 
 InstallerNCC::InstallerNCC()
@@ -66,7 +94,7 @@ QString InstallerNCC::description() const
 
 VersionInfo InstallerNCC::version() const
 {
-  return VersionInfo(1, 0, 1, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 1, 0, VersionInfo::RELEASE_FINAL);
 }
 
 bool InstallerNCC::isActive() const
@@ -175,6 +203,27 @@ static BOOL CALLBACK BringToFront(HWND hwnd, LPARAM lParam)
 }
 
 
+std::wstring InstallerNCC::getSEVersion()
+{
+  QDir gamePath(m_MOInfo->gameInfo().path());
+  QStringList loaderExeQ = gamePath.entryList(QStringList() << "*se_loader.exe");
+  if (loaderExeQ.length() == 0) {
+    return std::wstring();
+  } else {
+    try {
+      VS_FIXEDFILEINFO version = getFileVersionInfo(gamePath.absoluteFilePath(loaderExeQ.at(0)));
+      return (boost::basic_format<wchar_t>(L"%d.%d.%d")
+              % (int)(version.dwFileVersionMS & 0xFFFF)
+              % (int)(version.dwFileVersionLS >> 16)
+              % (int)(version.dwFileVersionLS & 0xFFFF)).str();
+    } catch (const std::runtime_error &ex) {
+      qCritical("%s", ex.what());
+      return std::wstring();
+    }
+  }
+}
+
+
 IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInterface, const QString &archiveName)
 {
   wchar_t binary[MAX_PATH];
@@ -183,19 +232,34 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
 #pragma warning( push )
 #pragma warning( disable : 4996 )
   _snwprintf(binary, MAX_PATH, L"%ls", ToWString(QDir::toNativeSeparators(nccPath())).c_str());
-  _snwprintf(parameters, 1024, L"-g %ls -p \"%ls\" -i \"%ls\" \"%ls\"",
+
+
+  std::wstring seVersion = getSEVersion();
+  std::wstring seString;
+  if (seVersion.size() > 0) {
+    seString = std::wstring() + L"-se \"" + seVersion + L"\"";
+  }
+
+  _snwprintf(parameters, 1024, L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
              gameShortName(m_MOInfo->gameInfo().type()),
-             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->profilePath() + "/plugins.txt"))).c_str(),
+             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->profilePath()))).c_str(),
+             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->gameInfo().path()))).c_str(),
+             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath()))).c_str(),
+             seString.c_str(),
              ToWString(QDir::toNativeSeparators(archiveName)).c_str(),
              ToWString(QDir::toNativeSeparators(modInterface->absolutePath())).c_str());
+
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
 #pragma warning( pop )
 
   // NCC assumes the installation directory is the game directory and may try to access the binary to determine version information
   QStringList copiedFiles;
   QStringList patterns;
-  patterns.append(QDir::fromNativeSeparators(m_MOInfo->gameInfo().binaryName()));
-  patterns.append("*se_loader.exe");
+
+  patterns << QDir::fromNativeSeparators(m_MOInfo->gameInfo().binaryName())
+           << "*se_loader.exe"
+       ;
+
   QDirIterator iter(QDir::fromNativeSeparators(m_MOInfo->gameInfo().path()), patterns);
   QDir modDir(modInterface->absolutePath());
   while (iter.hasNext()) {
@@ -375,31 +439,13 @@ bool InstallerNCC::isNCCInstalled() const
 
 bool InstallerNCC::isNCCCompatible() const
 {
-  std::wstring nccNameW = ToWString(QDir::toNativeSeparators(nccPath()));
-
-  DWORD size = ::GetFileVersionInfoSizeW(nccNameW.c_str(), NULL);
-  if (size == 0) {
-    qCritical("failed to determine file version info size");
+  try {
+    VS_FIXEDFILEINFO temp = getFileVersionInfo(nccPath());
+    return (temp.dwFileVersionMS & 0xFFFFFF) == COMPATIBLE_MAJOR_VERSION;
+  } catch (const std::runtime_error &ex) {
+    qCritical("%s", ex.what());
     return false;
   }
-
-  boost::scoped_array<char> buffer(new char[size]);
-
-  if (!::GetFileVersionInfoW(nccNameW.c_str(), 0UL, size, buffer.get())) {
-    qCritical("failed to determine file version info");
-    return false;
-  }
-
-  void *versionInfoPtr = NULL;
-  UINT versionInfoLength = 0;
-  if (!::VerQueryValue(buffer.get(), L"\\", &versionInfoPtr, &versionInfoLength)) {
-    qCritical("failed to determine file version");
-    return false;
-  }
-
-  VS_FIXEDFILEINFO* temp = (VS_FIXEDFILEINFO*)versionInfoPtr;
-
-  return (temp->dwFileVersionMS & 0xFFFFFF) == COMPATIBLE_MAJOR_VERSION;
 }
 
 bool InstallerNCC::isDotNetInstalled() const

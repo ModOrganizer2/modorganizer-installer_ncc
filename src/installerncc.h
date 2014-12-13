@@ -76,6 +76,7 @@ private:
   bool isNCCCompatible() const;
   bool isDotNetInstalled() const;
   QString nccPath() const;
+  std::wstring getSEVersion();
 
   IPluginInstaller::EInstallResult invokeNCC(MOBase::IModInterface *modInterface, const QString &archiveName);
 
