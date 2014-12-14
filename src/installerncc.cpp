@@ -395,6 +395,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   if (modInterface == NULL) {
     return RESULT_CANCELED;
   }
+  modInterface->setInstallationFile(QFileInfo(archiveName).fileName());
   modInterface->setVersion(version);
   modInterface->setNexusID(modID);
 
