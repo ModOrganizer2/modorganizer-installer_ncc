@@ -67,7 +67,7 @@ VS_FIXEDFILEINFO getFileVersionInfo(const QString &path)
 
 
 InstallerNCC::InstallerNCC()
-  : m_MOInfo(NULL)
+  : m_MOInfo(nullptr)
 {
 }
 
@@ -173,7 +173,7 @@ const wchar_t *InstallerNCC::gameShortName(IGameInfo::Type gameType) const
 // http://www.shloemi.com/2012/09/solved-setforegroundwindow-win32-api-not-always-works/
 static void ForceWindowVisible(HWND hwnd)
 {
-  DWORD foregroundThread = ::GetWindowThreadProcessId(::GetForegroundWindow(), NULL);
+  DWORD foregroundThread = ::GetWindowThreadProcessId(::GetForegroundWindow(), nullptr);
   DWORD currentThread = ::GetCurrentThreadId();
 
   if (foregroundThread != currentThread) {
@@ -279,7 +279,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   SHELLEXECUTEINFOW execInfo = {0};
   execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
   execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-  execInfo.hwnd = NULL;
+  execInfo.hwnd = nullptr;
   execInfo.lpVerb = L"open";
   execInfo.lpFile = binary;
   execInfo.lpParameters = parameters;
@@ -392,7 +392,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
                                                        const QString &version, int modID)
 {
   IModInterface *modInterface = m_MOInfo->createMod(modName);
-  if (modInterface == NULL) {
+  if (modInterface == nullptr) {
     return RESULT_CANCELED;
   }
   modInterface->setInstallationFile(QFileInfo(archiveName).fileName());
@@ -412,7 +412,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
         modName.update(data.at(0), GUESS_META);
         QString newName = modName;
         if ((QString::compare(modName, modInterface->name(), Qt::CaseInsensitive) != 0) &&
-            (m_MOInfo->getMod(newName) == NULL)) {
+            (m_MOInfo->getMod(newName) == nullptr)) {
           modInterface->setName(modName);
         }
         if (data.at(1).length() > 0) {
