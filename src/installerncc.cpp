@@ -43,7 +43,7 @@ using namespace MOBase;
 
 VS_FIXEDFILEINFO getFileVersionInfo(const QString &path)
 {
-  std::wstring nameW = ToWString(QDir::toNativeSeparators(path));
+  std::wstring nameW = QDir::toNativeSeparators(path).toStdWString();
 
   DWORD size = ::GetFileVersionInfoSizeW(nameW.c_str(), NULL);
   if (size == 0) {
