@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include <report.h>
 #include <scopeguard.h>
+#include <imodinterface.h>
 
 #include <boost/assign.hpp>
 #include <boost/scoped_array.hpp>
