@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include <report.h>
 #include <scopeguard.h>
+#include <imodinterface.h>
 
 #include <boost/assign.hpp>
 #include <boost/scoped_array.hpp>
@@ -276,6 +277,8 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
     }
   });
 
+  qDebug("running %ls %ls", binary, parameters);
+
   SHELLEXECUTEINFOW execInfo = {0};
   execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
   execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -379,6 +382,8 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
     }
     if (errorOccured) {
       reportError(tr("Finalization of the installation failed. The mod may or may not work correctly. See mo_interface.log for details"));
+    } else {
+      shellDelete(QStringList(modInterface->absolutePath() + "/NexusClientCLI.log"));
     }
   } else if (exitCode != 11) { // 11 = manually canceled
     reportError(tr("installation failed (errorcode %1)").arg(exitCode));

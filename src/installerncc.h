@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iplugininstallercustom.h>
 #include <iplugindiagnose.h>
+#include <igameinfo.h>
 #include <QXmlStreamReader>
 
 
