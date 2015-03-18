@@ -32,4 +32,5 @@ include(../plugin_template.pri)
 INCLUDEPATH += "$${BOOSTPATH}"
 
 OTHER_FILES += \
-    installerncc.json
+    installerncc.json\
+    SConscript
