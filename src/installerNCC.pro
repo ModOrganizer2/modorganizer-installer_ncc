@@ -34,3 +34,6 @@ INCLUDEPATH += "$${BOOSTPATH}"
 OTHER_FILES += \
     installerncc.json\
     SConscript
+
+# an attempt to stop moc self destructing
+DEFINES -= _MSC_VER
