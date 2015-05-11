@@ -73,7 +73,7 @@ public: // IPluginDiagnose
 private:
 
   const wchar_t *gameShortName(MOBase::IGameInfo::Type gameType) const;
-  bool isNCCInstalled() const;  
+  bool isNCCInstalled() const;
   bool isNCCCompatible() const;
   bool isDotNetInstalled() const;
   QString nccPath() const;
