@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include <scopeguard.h>
 #include <imodinterface.h>
+#include "iplugingame.h"
 
 #include <boost/assign.hpp>
 #include <boost/scoped_array.hpp>
@@ -257,7 +258,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   QStringList copiedFiles;
   QStringList patterns;
 
-  patterns << QDir::fromNativeSeparators(m_MOInfo->gameInfo().binaryName())
+  patterns << m_MOInfo->managedGame()->getBinaryName()
            << "*se_loader.exe"
        ;
 
