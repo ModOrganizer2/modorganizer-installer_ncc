@@ -207,7 +207,7 @@ static BOOL CALLBACK BringToFront(HWND hwnd, LPARAM lParam)
 
 std::wstring InstallerNCC::getSEVersion()
 {
-  QDir gamePath(m_MOInfo->gameInfo().path());
+  QDir gamePath(m_MOInfo->managedGame()->gameDirectory());
   QStringList loaderExeQ = gamePath.entryList(QStringList() << "*se_loader.exe");
   if (loaderExeQ.length() == 0) {
     return std::wstring();
@@ -242,19 +242,22 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
     seString = std::wstring() + L"-se \"" + seVersion + L"\"";
   }
 
-  _snwprintf(parameters, 1024, L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
+  _snwprintf(parameters, sizeof(parameters), L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
              gameShortName(m_MOInfo->gameInfo().type()),
-             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->profilePath()))).c_str(),
-             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->gameInfo().path()))).c_str(),
-             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath()))).c_str(),
+             QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->profilePath())).toStdWString().c_str(),
+             QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->managedGame()->gameDirectory().absolutePath())).toStdWString().c_str(),
+             QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath())).toStdWString().c_str(),
              seString.c_str(),
-             ToWString(QDir::toNativeSeparators(archiveName)).c_str(),
-             ToWString(QDir::toNativeSeparators(modInterface->absolutePath())).c_str());
+             QDir::toNativeSeparators(archiveName).toStdWString().c_str(),
+             QDir::toNativeSeparators(modInterface->absolutePath()).toStdWString().c_str());
 
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
 #pragma warning( pop )
 
-  // NCC assumes the installation directory is the game directory and may try to access the binary to determine version information
+  // NCC assumes the installation directory is the game directory and may try to
+  // access the binary to determine version information. So we have to copy the
+  // executable and script extender in.
+  // FIXME: Get the script extender loader name from the game info
   QStringList copiedFiles;
   QStringList patterns;
 
@@ -262,7 +265,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
            << "*se_loader.exe"
        ;
 
-  QDirIterator iter(QDir::fromNativeSeparators(m_MOInfo->gameInfo().path()), patterns);
+  QDirIterator iter(m_MOInfo->managedGame()->gameDirectory().absolutePath(), patterns);
   QDir modDir(modInterface->absolutePath());
   while (iter.hasNext()) {
     iter.next();
