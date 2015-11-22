@@ -159,19 +159,6 @@ bool InstallerNCC::isArchiveSupported(const QString &archiveName) const
          archiveName.endsWith(".omod", Qt::CaseInsensitive);
 }
 
-
-const wchar_t *InstallerNCC::gameShortName(IGameInfo::Type gameType) const
-{
-  switch (gameType) {
-    case IGameInfo::TYPE_OBLIVION: return L"Oblivion";
-    case IGameInfo::TYPE_SKYRIM: return L"Skyrim";
-    case IGameInfo::TYPE_FALLOUT3: return L"Fallout3";
-    case IGameInfo::TYPE_FALLOUTNV: return L"FalloutNV";
-    default: throw IncompatibilityException(tr("game not supported by NCC Installer"));
-  }
-}
-
-
 // http://www.shloemi.com/2012/09/solved-setforegroundwindow-win32-api-not-always-works/
 static void ForceWindowVisible(HWND hwnd)
 {
@@ -243,7 +230,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   }
 
   _snwprintf(parameters, sizeof(parameters), L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
-             gameShortName(m_MOInfo->gameInfo().type()),
+             m_MOInfo->managedGame()->getNexusName().toStdWString().c_str(),
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->profilePath())).toStdWString().c_str(),
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->managedGame()->gameDirectory().absolutePath())).toStdWString().c_str(),
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath())).toStdWString().c_str(),
