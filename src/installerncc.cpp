@@ -230,7 +230,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   }
 
   _snwprintf(parameters, sizeof(parameters), L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
-             m_MOInfo->managedGame()->getNexusName().toStdWString().c_str(),
+             m_MOInfo->managedGame()->getGameShortName().toStdWString().c_str(),
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->profilePath())).toStdWString().c_str(),
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->managedGame()->gameDirectory().absolutePath())).toStdWString().c_str(),
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath())).toStdWString().c_str(),
