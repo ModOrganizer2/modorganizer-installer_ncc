@@ -9,6 +9,7 @@ env.AppendUnique(CPPDEFINES = [
 ])
 
 env.AppendUnique(CPPPATH = [
+    '../gamefeatures',
     '${BOOSTPATH}'
 ])
 

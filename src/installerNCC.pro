@@ -29,7 +29,7 @@ LIBS += -lVersion
 
 include(../plugin_template.pri)
 
-INCLUDEPATH += "$${BOOSTPATH}"
+INCLUDEPATH += ../gameFeatures "$${BOOSTPATH}"
 
 OTHER_FILES += \
     installerncc.json\

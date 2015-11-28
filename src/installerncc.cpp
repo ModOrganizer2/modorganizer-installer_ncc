@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <scopeguard.h>
 #include <imodinterface.h>
 #include "iplugingame.h"
+#include "scriptextender.h"
 
 #include <boost/assign.hpp>
 #include <boost/scoped_array.hpp>
@@ -192,24 +193,13 @@ static BOOL CALLBACK BringToFront(HWND hwnd, LPARAM lParam)
 }
 
 
-std::wstring InstallerNCC::getSEVersion()
+std::wstring InstallerNCC::getSEVersion(QString const &seloader)
 {
-  QDir gamePath(m_MOInfo->managedGame()->gameDirectory());
-  QStringList loaderExeQ = gamePath.entryList(QStringList() << "*se_loader.exe");
-  if (loaderExeQ.length() == 0) {
-    return std::wstring();
-  } else {
-    try {
-      VS_FIXEDFILEINFO version = getFileVersionInfo(gamePath.absoluteFilePath(loaderExeQ.at(0)));
-      return (boost::basic_format<wchar_t>(L"%d.%d.%d")
-              % (int)(version.dwFileVersionMS & 0xFFFF)
-              % (int)(version.dwFileVersionLS >> 16)
-              % (int)(version.dwFileVersionLS & 0xFFFF)).str();
-    } catch (const std::runtime_error &ex) {
-      qCritical("%s", ex.what());
-      return std::wstring();
-    }
-  }
+  VS_FIXEDFILEINFO version = getFileVersionInfo(seloader);
+  return (boost::basic_format<wchar_t>(L"%d.%d.%d")
+          % (int)(version.dwFileVersionMS & 0xFFFF)
+          % (int)(version.dwFileVersionLS >> 16)
+          % (int)(version.dwFileVersionLS & 0xFFFF)).str();
 }
 
 
@@ -223,10 +213,14 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   _snwprintf(binary, MAX_PATH, L"%ls", ToWString(QDir::toNativeSeparators(nccPath())).c_str());
 
 
-  std::wstring seVersion = getSEVersion();
   std::wstring seString;
-  if (seVersion.size() > 0) {
-    seString = std::wstring() + L"-se \"" + seVersion + L"\"";
+  ScriptExtender *extender = m_MOInfo->managedGame()->feature<ScriptExtender>();
+  if (extender != nullptr && extender->isInstalled())
+  {
+    std::wstring seVersion = getSEVersion(extender->loaderPath());
+    if (!seVersion.empty()) {
+      seString = std::wstring() + L"-se \"" + seVersion + L"\"";
+    }
   }
 
   _snwprintf(parameters, sizeof(parameters), L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
@@ -244,20 +238,18 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   // NCC assumes the installation directory is the game directory and may try to
   // access the binary to determine version information. So we have to copy the
   // executable and script extender in.
-  // FIXME: Get the script extender loader name from the game info
+  QStringList filesToCopy;
+  filesToCopy << m_MOInfo->managedGame()->getBinaryName();
+  if (extender != nullptr && extender->isInstalled()) {
+    filesToCopy << extender->loaderName();
+  }
+
   QStringList copiedFiles;
-  QStringList patterns;
-
-  patterns << m_MOInfo->managedGame()->getBinaryName()
-           << "*se_loader.exe"
-       ;
-
-  QDirIterator iter(m_MOInfo->managedGame()->gameDirectory().absolutePath(), patterns);
   QDir modDir(modInterface->absolutePath());
-  while (iter.hasNext()) {
-    iter.next();
-    QString destination = modDir.absoluteFilePath(iter.fileInfo().fileName());
-    if (QFile::copy(iter.fileInfo().absoluteFilePath(), destination)) {
+
+  for (QString file : filesToCopy) {
+    QString destination = modDir.absoluteFilePath(file);
+    if (QFile::copy(m_MOInfo->managedGame()->gameDirectory().absoluteFilePath(file), destination)) {
       copiedFiles.append(destination);
     }
   }
