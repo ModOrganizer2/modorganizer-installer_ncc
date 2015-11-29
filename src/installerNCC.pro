@@ -33,4 +33,5 @@ INCLUDEPATH += ../gameFeatures "$${BOOSTPATH}"
 
 OTHER_FILES += \
     installerncc.json\
-    SConscript
+    SConscript\
+    CMakeLists.txt
