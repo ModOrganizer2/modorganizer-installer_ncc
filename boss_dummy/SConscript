@@ -1,0 +1,24 @@
+Import('env')
+env = env.Clone()
+
+env.AppendUnique(CPPDEFINES = 'BOSSDUMMY_LIBRARY')
+
+lib = env.SharedLibrary(env.Glob('*.cpp'))
+
+# FIXME work out what this is meant to do. Depends on NCC building
+# which I curently don't do with Scons
+
+#env.InstallModule(lib)
+
+"""
++QMAKE_CXXFLAGS_RELEASE -= -MD
++QMAKE_CXXFLAGS_RELEASE += -MT
+
+PUBLISHSCRIPT = $$quote(powershell.exe -executionpolicy bypass -command $$PWD\\..\\NCC\\publish.ps1)
+Debug:    PUBLISHCMD = $$quote($$PUBLISHSCRIPT -debug)
+Release:  PUBLISHCMD = $$quote($$PUBLISHSCRIPT -release)
+
+#This sort of dies
+#QMAKE_POST_LINK += $$quote($$PUBLISHCMD) $$escape_expand(\\n)
+#QMAKE_POST_LINK += copy $$quote($$SRCDIR\\BossDummy.dll) $$quote($$DSTDIR\\NCC\\GameModes\\data\\boss32.dll) $$escape_expand(\\n)
+"""
