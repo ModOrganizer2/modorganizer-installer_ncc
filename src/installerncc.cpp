@@ -23,6 +23,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include <scopeguard.h>
 #include <imodinterface.h>
+#include "iplugingame.h"
+#include "scriptextender.h"
 
 #include <boost/assign.hpp>
 #include <boost/scoped_array.hpp>
@@ -158,19 +160,6 @@ bool InstallerNCC::isArchiveSupported(const QString &archiveName) const
          archiveName.endsWith(".omod", Qt::CaseInsensitive);
 }
 
-
-const wchar_t *InstallerNCC::gameShortName(IGameInfo::Type gameType) const
-{
-  switch (gameType) {
-    case IGameInfo::TYPE_OBLIVION: return L"Oblivion";
-    case IGameInfo::TYPE_SKYRIM: return L"Skyrim";
-    case IGameInfo::TYPE_FALLOUT3: return L"Fallout3";
-    case IGameInfo::TYPE_FALLOUTNV: return L"FalloutNV";
-    default: throw IncompatibilityException(tr("game not supported by NCC Installer"));
-  }
-}
-
-
 // http://www.shloemi.com/2012/09/solved-setforegroundwindow-win32-api-not-always-works/
 static void ForceWindowVisible(HWND hwnd)
 {
@@ -204,24 +193,13 @@ static BOOL CALLBACK BringToFront(HWND hwnd, LPARAM lParam)
 }
 
 
-std::wstring InstallerNCC::getSEVersion()
+std::wstring InstallerNCC::getSEVersion(QString const &seloader)
 {
-  QDir gamePath(m_MOInfo->gameInfo().path());
-  QStringList loaderExeQ = gamePath.entryList(QStringList() << "*se_loader.exe");
-  if (loaderExeQ.length() == 0) {
-    return std::wstring();
-  } else {
-    try {
-      VS_FIXEDFILEINFO version = getFileVersionInfo(gamePath.absoluteFilePath(loaderExeQ.at(0)));
-      return (boost::basic_format<wchar_t>(L"%d.%d.%d")
-              % (int)(version.dwFileVersionMS & 0xFFFF)
-              % (int)(version.dwFileVersionLS >> 16)
-              % (int)(version.dwFileVersionLS & 0xFFFF)).str();
-    } catch (const std::runtime_error &ex) {
-      qCritical("%s", ex.what());
-      return std::wstring();
-    }
-  }
+  VS_FIXEDFILEINFO version = getFileVersionInfo(seloader);
+  return (boost::basic_format<wchar_t>(L"%d.%d.%d")
+          % (int)(version.dwFileVersionMS & 0xFFFF)
+          % (int)(version.dwFileVersionLS >> 16)
+          % (int)(version.dwFileVersionLS & 0xFFFF)).str();
 }
 
 
@@ -235,38 +213,43 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   _snwprintf(binary, MAX_PATH, L"%ls", ToWString(QDir::toNativeSeparators(nccPath())).c_str());
 
 
-  std::wstring seVersion = getSEVersion();
   std::wstring seString;
-  if (seVersion.size() > 0) {
-    seString = std::wstring() + L"-se \"" + seVersion + L"\"";
+  ScriptExtender *extender = m_MOInfo->managedGame()->feature<ScriptExtender>();
+  if (extender != nullptr && extender->isInstalled())
+  {
+    std::wstring seVersion = getSEVersion(extender->loaderPath());
+    if (!seVersion.empty()) {
+      seString = std::wstring() + L"-se \"" + seVersion + L"\"";
+    }
   }
 
-  _snwprintf(parameters, 1024, L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
-             gameShortName(m_MOInfo->gameInfo().type()),
-             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->profilePath()))).c_str(),
-             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->gameInfo().path()))).c_str(),
-             ToWString(QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath()))).c_str(),
+  _snwprintf(parameters, sizeof(parameters), L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
+             m_MOInfo->managedGame()->getGameShortName().toStdWString().c_str(),
+             QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->profilePath())).toStdWString().c_str(),
+             QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->managedGame()->gameDirectory().absolutePath())).toStdWString().c_str(),
+             QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath())).toStdWString().c_str(),
              seString.c_str(),
-             ToWString(QDir::toNativeSeparators(archiveName)).c_str(),
-             ToWString(QDir::toNativeSeparators(modInterface->absolutePath())).c_str());
+             QDir::toNativeSeparators(archiveName).toStdWString().c_str(),
+             QDir::toNativeSeparators(modInterface->absolutePath()).toStdWString().c_str());
 
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
 #pragma warning( pop )
 
-  // NCC assumes the installation directory is the game directory and may try to access the binary to determine version information
+  // NCC assumes the installation directory is the game directory and may try to
+  // access the binary to determine version information. So we have to copy the
+  // executable and script extender in.
+  QStringList filesToCopy;
+  filesToCopy << m_MOInfo->managedGame()->getBinaryName();
+  if (extender != nullptr && extender->isInstalled()) {
+    filesToCopy << extender->loaderName();
+  }
+
   QStringList copiedFiles;
-  QStringList patterns;
-
-  patterns << QDir::fromNativeSeparators(m_MOInfo->gameInfo().binaryName())
-           << "*se_loader.exe"
-       ;
-
-  QDirIterator iter(QDir::fromNativeSeparators(m_MOInfo->gameInfo().path()), patterns);
   QDir modDir(modInterface->absolutePath());
-  while (iter.hasNext()) {
-    iter.next();
-    QString destination = modDir.absoluteFilePath(iter.fileInfo().fileName());
-    if (QFile::copy(iter.fileInfo().absoluteFilePath(), destination)) {
+
+  for (QString file : filesToCopy) {
+    QString destination = modDir.absoluteFilePath(file);
+    if (QFile::copy(m_MOInfo->managedGame()->gameDirectory().absoluteFilePath(file), destination)) {
       copiedFiles.append(destination);
     }
   }
