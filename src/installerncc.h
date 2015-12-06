@@ -23,7 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iplugininstallercustom.h>
 #include <iplugindiagnose.h>
-#include <igameinfo.h>
+
 #include <QXmlStreamReader>
 
 
@@ -72,12 +72,11 @@ public: // IPluginDiagnose
 
 private:
 
-  const wchar_t *gameShortName(MOBase::IGameInfo::Type gameType) const;
   bool isNCCInstalled() const;
   bool isNCCCompatible() const;
   bool isDotNetInstalled() const;
   QString nccPath() const;
-  std::wstring getSEVersion();
+  std::wstring getSEVersion(const QString &seloader);
 
   IPluginInstaller::EInstallResult invokeNCC(MOBase::IModInterface *modInterface, const QString &archiveName);
 
