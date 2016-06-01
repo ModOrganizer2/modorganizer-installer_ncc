@@ -231,7 +231,6 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
              seString.c_str(),
              QDir::toNativeSeparators(archiveName).toStdWString().c_str(),
              QDir::toNativeSeparators(modInterface->absolutePath()).toStdWString().c_str());
-
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
 #pragma warning( pop )
 
@@ -323,50 +322,10 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   ::CloseHandle(execInfo.hProcess);
 
   if ((exitCode == 0) || (exitCode == 10)) { // 0 = success, 10 = incomplete installation
-    bool errorOccured = false;
-    { // move all installed files from the data directory one directory up
-      QDir targetDir(modInterface->absolutePath());
-      QDirIterator dirIter(targetDir.absoluteFilePath("Data"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-
-      bool hasFiles = false;
-      while (dirIter.hasNext()) {
-        dirIter.next();
-        QFileInfo fileInfo = dirIter.fileInfo();
-        QString newName = targetDir.absoluteFilePath(fileInfo.fileName());
-        if (fileInfo.isFile() && QFile::exists(newName)) {
-          if (!QFile::remove(newName)) {
-            qCritical("failed to overwrite %s", qPrintable(newName));
-            errorOccured = true;
-          }
-        } // if it's a directory and the target exists that isn't really a problem
-
-        if (!QFile::rename(fileInfo.absoluteFilePath(), newName)) {
-          // moving doesn't work when merging
-          if (!copyDir(fileInfo.absoluteFilePath(), newName, true)) {
-            qCritical("failed to move %s to %s", qPrintable(fileInfo.absoluteFilePath()), qPrintable(newName));
-            errorOccured = true;
-          }
-        }
-        hasFiles = true;
-      }
-      // recognition of canceled installation in the external installer is broken so we assume the installation was
-      // canceled if no files were installed
-      if (!hasFiles) {
-        qDebug("no files in installed mod");
-        exitCode = 11;
-      }
-    }
-
-    QString dataDir = modInterface->absolutePath() + "/Data";
-    if (!shellDelete(QStringList(dataDir), false, parentWidget())) {
-      qCritical("failed to remove data directory from %s", qPrintable(dataDir));
-      errorOccured = true;
-    }
-    if (errorOccured) {
-      reportError(tr("Finalization of the installation failed. The mod may or may not work correctly. See mo_interface.log for details"));
-    } else {
-      shellDelete(QStringList(modInterface->absolutePath() + "/NexusClientCLI.log"));
-    }
+    // cleanup
+    shellDelete(QStringList(modInterface->absolutePath() + "/Data"));
+    shellDelete(QStringList(modInterface->absolutePath() + "/temp"));
+    shellDelete(QStringList(modInterface->absolutePath() + "/NexusClientCLI.log"));
   } else if (exitCode != 11) { // 11 = manually canceled
     reportError(tr("installation failed (errorcode %1)").arg(exitCode));
   }
@@ -505,6 +464,3 @@ void InstallerNCC::startGuidedFix(unsigned int key) const
   throw MyException(tr("invalid problem key %1").arg(key));
 }
 
-#if QT_VERSION < QT_VERSION_CHECK(5,0,0)
-Q_EXPORT_PLUGIN2(installerNCC, InstallerNCC)
-#endif
