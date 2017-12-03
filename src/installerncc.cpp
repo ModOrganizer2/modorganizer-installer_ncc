@@ -397,8 +397,8 @@ bool InstallerNCC::isNCCCompatible() const
 
 bool InstallerNCC::isDotNetInstalled() const
 {
-  return QSettings("HKEY_LOCAL_MACHINE\\Software\\Microsoft\\NET Framework Setup\\NDP\\v3.5",
-                   QSettings::NativeFormat).value("Install", 0) == 1;
+  return QSettings("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full",
+                   QSettings::NativeFormat).value("Release", 0) >= 393295;
 }
 
 QString InstallerNCC::nccPath() const
@@ -430,7 +430,7 @@ QString InstallerNCC::shortDescription(unsigned int key) const
     case PROBLEM_NCCINCOMPATIBLE:
       return tr("NCC Version may be incompatible.");
     case PROBLEM_DOTNETINSTALLED:
-      return tr("dotNet is not installed or outdated.");
+      return tr(".NET 4.6 or greater is required.");
     default:
       throw MyException(tr("invalid problem key %1").arg(key));
   }
@@ -445,8 +445,8 @@ QString InstallerNCC::fullDescription(unsigned int key) const
     case PROBLEM_NCCINCOMPATIBLE:
       return tr("NCC version may be incompatible, expected version 0.%1.x.x.").arg(COMPATIBLE_MAJOR_VERSION);
     case PROBLEM_DOTNETINSTALLED: {
-      QString dotNetUrl = "http://www.microsoft.com/en-us/download/details.aspx?id=17851";
-      return tr("<li>dotNet is not installed or the wrong version. This is required to use NCC. "
+      QString dotNetUrl = "https://www.microsoft.com/en-us/download/details.aspx?id=48130";
+      return tr("<li>.NET version 4.6 or greater is required to use NCC. "
                 "Get it from here: <a href=\"%1\">%1</a></li>").arg(dotNetUrl);
     } break;
     default:
