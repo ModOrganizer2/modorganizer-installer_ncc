@@ -11,8 +11,5 @@ SET(DEPENDENCIES_DIR CACHE PATH "")
 # hint to find qt in dependencies path
 LIST(APPEND CMAKE_PREFIX_PATH ${QT_ROOT}/lib/cmake)
 
-FILE(GLOB_RECURSE BOOST_ROOT ${DEPENDENCIES_DIR}/boost*/project-config.jam)
-GET_FILENAME_COMPONENT(BOOST_ROOT ${BOOST_ROOT} DIRECTORY)
-
 ADD_SUBDIRECTORY(src)
 #ADD_SUBDIRECTORY(boss_dummy) Not sure what this accomplishes aside from making NCC lighter but it might be worth implementing this for 32bit and LOOT
