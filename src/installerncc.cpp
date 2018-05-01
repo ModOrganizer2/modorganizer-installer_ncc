@@ -37,6 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProgressDialog>
 #include <QSettings>
 #include <QtPlugin>
+#include <QInputDialog>
 
 
 using namespace MOBase;
@@ -337,6 +338,12 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
 IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &modName, const QString &archiveName,
                                                        const QString &version, int modID)
 {
+  bool ok;
+  modName = QInputDialog::getText(parentWidget(), tr("Confirm Mod Name"), tr("Desired mod name:"), QLineEdit::Normal, modName, &ok);
+
+  if (!ok)
+    return RESULT_CANCELED;
+
   IModInterface *modInterface = m_MOInfo->createMod(modName);
   if (modInterface == nullptr) {
     return RESULT_CANCELED;
