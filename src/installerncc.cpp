@@ -204,7 +204,7 @@ std::wstring InstallerNCC::getSEVersion(QString const &seloader)
 }
 
 
-IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInterface, const QString &archiveName)
+IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInterface, const IPluginGame *game, const QString &archiveName)
 {
   wchar_t binary[MAX_PATH];
   wchar_t parameters[1024]; // maximum: 2xMAX_PATH + approx 20 characters
@@ -225,7 +225,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   }
 
   _snwprintf(parameters, sizeof(parameters), L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
-             m_MOInfo->managedGame()->gameShortName().toStdWString().c_str(),
+             game->gameShortName().toStdWString().c_str(),
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->profilePath())).toStdWString().c_str(),
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->managedGame()->gameDirectory().absolutePath())).toStdWString().c_str(),
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath())).toStdWString().c_str(),
@@ -335,11 +335,14 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
 }
 
 
-IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &modName, const QString &archiveName,
+IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &modName, QString gameName, const QString &archiveName,
                                                        const QString &version, int modID)
 {
   bool ok;
   modName = QInputDialog::getText(parentWidget(), tr("Confirm Mod Name"), tr("Desired mod name:"), QLineEdit::Normal, modName, &ok);
+
+  const IPluginGame *game = m_MOInfo->getGame(gameName);
+  if (game == nullptr) game = m_MOInfo->managedGame();
 
   if (!ok)
     return RESULT_CANCELED;
@@ -352,7 +355,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   modInterface->setVersion(version);
   modInterface->setNexusID(modID);
 
-  EInstallResult res = invokeNCC(modInterface, archiveName);
+  EInstallResult res = invokeNCC(modInterface, game, archiveName);
 
   if (res == RESULT_SUCCESS) {
     // post process mod directory

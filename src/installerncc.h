@@ -59,7 +59,7 @@ public: // IPluginInstallerCustom
 
   virtual std::set<QString> supportedExtensions() const;
   virtual bool isArchiveSupported(const QString &archiveName) const;
-  virtual EInstallResult install(MOBase::GuessedValue<QString> &modName, const QString &archiveName,
+  virtual EInstallResult install(MOBase::GuessedValue<QString> &modName, QString gameName, const QString &archiveName,
                                  const QString &version, int modID);
 
 public: // IPluginDiagnose
@@ -78,7 +78,7 @@ private:
   QString nccPath() const;
   std::wstring getSEVersion(const QString &seloader);
 
-  IPluginInstaller::EInstallResult invokeNCC(MOBase::IModInterface *modInterface, const QString &archiveName);
+  IPluginInstaller::EInstallResult invokeNCC(MOBase::IModInterface *modInterface, const MOBase::IPluginGame *game, const QString &archiveName);
 
 private:
 
