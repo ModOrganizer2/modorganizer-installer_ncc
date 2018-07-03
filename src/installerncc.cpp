@@ -98,7 +98,7 @@ QString InstallerNCC::description() const
 
 VersionInfo InstallerNCC::version() const
 {
-  return VersionInfo(1, 1, 0, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 2, 0, VersionInfo::RELEASE_FINAL);
 }
 
 bool InstallerNCC::isActive() const
@@ -342,7 +342,13 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   modName = QInputDialog::getText(parentWidget(), tr("Confirm Mod Name"), tr("Desired mod name:"), QLineEdit::Normal, modName, &ok);
 
   const IPluginGame *game = m_MOInfo->getGame(gameName);
-  if (game == nullptr) game = m_MOInfo->managedGame();
+  if (game == nullptr) {
+    game = m_MOInfo->managedGame();
+    QStringList sources = game->primarySources();
+    if (sources.size()) {
+      game = m_MOInfo->getGame(sources.at(0));
+    }
+  }
 
   if (!ok)
     return RESULT_CANCELED;
