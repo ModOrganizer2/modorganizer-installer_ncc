@@ -46,40 +46,40 @@ Based on Nexus Mod Manager by Black Tree Gaming Ltd.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerncc.cpp" line="436"/>
+        <location filename="installerncc.cpp" line="445"/>
         <source>NCC is not installed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerncc.cpp" line="438"/>
+        <location filename="installerncc.cpp" line="447"/>
         <source>NCC Version may be incompatible.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerncc.cpp" line="440"/>
+        <location filename="installerncc.cpp" line="449"/>
         <source>.NET 4.6 or greater is required.</source>
         <oldsource>dotNet is not installed or outdated.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerncc.cpp" line="442"/>
-        <location filename="installerncc.cpp" line="460"/>
-        <location filename="installerncc.cpp" line="471"/>
+        <location filename="installerncc.cpp" line="451"/>
+        <location filename="installerncc.cpp" line="469"/>
+        <location filename="installerncc.cpp" line="480"/>
         <source>invalid problem key %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerncc.cpp" line="450"/>
+        <location filename="installerncc.cpp" line="459"/>
         <source>NCC is not installed. You won&apos;t be able to install some scripted mod-installers. Get NCC from &lt;a href=&quot;http://www.nexusmods.com/skyrim/mods/1334&quot;&gt;the MO page on nexus&lt;/a&gt;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerncc.cpp" line="453"/>
+        <location filename="installerncc.cpp" line="462"/>
         <source>NCC version may be incompatible, expected version 0.%1.x.x.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerncc.cpp" line="456"/>
+        <location filename="installerncc.cpp" line="465"/>
         <source>&lt;li&gt;.NET version 4.6 or greater is required to use NCC. Get it from here: &lt;a href=&quot;%1&quot;&gt;%1&lt;/a&gt;&lt;/li&gt;</source>
         <oldsource>&lt;li&gt;dotNet is not installed or the wrong version. This is required to use NCC. Get it from here: &lt;a href=&quot;%1&quot;&gt;%1&lt;/a&gt;&lt;/li&gt;</oldsource>
         <translation type="unfinished"></translation>
