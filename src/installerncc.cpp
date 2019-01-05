@@ -389,7 +389,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
 
   } else {
     if (!modInterface->remove()) {
-      qCritical("failed to remove empty mod %s", qPrintable(modInterface->absolutePath()));
+      qCritical("failed to remove empty mod %s", qUtf8Printable(modInterface->absolutePath()));
     }
   }
 
