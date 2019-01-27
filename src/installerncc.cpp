@@ -98,7 +98,7 @@ QString InstallerNCC::description() const
 
 VersionInfo InstallerNCC::version() const
 {
-  return VersionInfo(1, 3, 0, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 3, 1, VersionInfo::RELEASE_FINAL);
 }
 
 bool InstallerNCC::isActive() const
