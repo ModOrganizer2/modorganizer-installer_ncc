@@ -358,7 +358,12 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   if (modInterface == nullptr) {
     return RESULT_CANCELED;
   }
-  modInterface->setInstallationFile(QFileInfo(archiveName).fileName());
+  QFileInfo archiveInfo(archiveName);
+  if (archiveInfo.dir() == QDir(m_MOInfo->downloadsPath())) {
+    modInterface->setInstallationFile(QFileInfo(archiveName).fileName());
+  } else {
+    modInterface->setInstallationFile(archiveName);
+  }
   modInterface->setVersion(version);
   modInterface->setNexusID(modID);
 
