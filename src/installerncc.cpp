@@ -348,6 +348,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
     QStringList sources = game->primarySources();
     if (sources.size()) {
       game = m_MOInfo->getGame(sources.at(0));
+      gameName = game->gameShortName();
     }
   }
 
@@ -366,6 +367,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   }
   modInterface->setVersion(version);
   modInterface->setNexusID(modID);
+  modInterface->setGameName(gameName);
 
   EInstallResult res = invokeNCC(modInterface, game, archiveName);
 
