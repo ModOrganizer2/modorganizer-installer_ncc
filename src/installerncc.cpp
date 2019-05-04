@@ -98,7 +98,7 @@ QString InstallerNCC::description() const
 
 VersionInfo InstallerNCC::version() const
 {
-  return VersionInfo(1, 3, 0, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 3, 1, VersionInfo::RELEASE_FINAL);
 }
 
 bool InstallerNCC::isActive() const
@@ -348,6 +348,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
     QStringList sources = game->primarySources();
     if (sources.size()) {
       game = m_MOInfo->getGame(sources.at(0));
+      gameName = game->gameShortName();
     }
   }
 
@@ -358,9 +359,15 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   if (modInterface == nullptr) {
     return RESULT_CANCELED;
   }
-  modInterface->setInstallationFile(QFileInfo(archiveName).fileName());
+  QFileInfo archiveInfo(archiveName);
+  if (archiveInfo.dir() == QDir(m_MOInfo->downloadsPath())) {
+    modInterface->setInstallationFile(QFileInfo(archiveName).fileName());
+  } else {
+    modInterface->setInstallationFile(archiveName);
+  }
   modInterface->setVersion(version);
   modInterface->setNexusID(modID);
+  modInterface->setGameName(gameName);
 
   EInstallResult res = invokeNCC(modInterface, game, archiveName);
 
@@ -389,7 +396,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
 
   } else {
     if (!modInterface->remove()) {
-      qCritical("failed to remove empty mod %s", qPrintable(modInterface->absolutePath()));
+      qCritical("failed to remove empty mod %s", qUtf8Printable(modInterface->absolutePath()));
     }
   }
 
