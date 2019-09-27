@@ -98,7 +98,7 @@ QString InstallerNCC::description() const
 
 VersionInfo InstallerNCC::version() const
 {
-  return VersionInfo(1, 3, 1, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 4, 0, VersionInfo::RELEASE_FINAL);
 }
 
 bool InstallerNCC::isActive() const
@@ -223,6 +223,10 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
       seString = std::wstring() + L"-se \"" + seVersion + L"\"";
     }
   }
+
+  // NCC doesn't always clean up the TEMP folder correctly so this force
+  // deletes it before every install
+  shellDelete(QStringList() << QDir::temp().absoluteFilePath("NMMCLI"));
 
   _snwprintf(parameters, sizeof(parameters), L"-g %ls -p \"%ls\" -gd \"%ls\" -d \"%ls\" %ls -i \"%ls\" \"%ls\"",
              game->gameShortName().toStdWString().c_str(),
