@@ -38,7 +38,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSettings>
 #include <QtPlugin>
 #include <QInputDialog>
-
+#include <Qtemporarydir> 
 
 using namespace MOBase;
 
@@ -223,6 +223,19 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
       seString = std::wstring() + L"-se \"" + seVersion + L"\"";
     }
   }
+  // ticket #142, use a temporary working directory where it had previously used the mod installation directory.
+  QDir m_FinalTargetModDirectory = QString::fromStdWString(QDir::toNativeSeparators(modInterface->absolutePath()).toStdWString().c_str());
+  QDir m_TempModWorkingDirectory;
+  QDir m_modDir;
+
+  QTemporaryDir dir;
+  if (dir.isValid()) {
+    m_TempModWorkingDirectory = dir.path();
+    m_modDir = m_TempModWorkingDirectory;
+  }
+  else {
+    m_modDir = m_FinalTargetModDirectory;
+  }
 
   // NCC doesn't always clean up the TEMP folder correctly so this force
   // deletes it before every install
@@ -235,7 +248,8 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath())).toStdWString().c_str(),
              seString.c_str(),
              QDir::toNativeSeparators(archiveName).toStdWString().c_str(),
-             QDir::toNativeSeparators(modInterface->absolutePath()).toStdWString().c_str());
+            QDir::toNativeSeparators(QDir::cleanPath(m_modDir.absolutePath())).toStdWString().c_str());
+
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
 #pragma warning( pop )
 
@@ -249,7 +263,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   }
 
   QStringList copiedFiles;
-  QDir modDir(modInterface->absolutePath());
+  QDir modDir = m_modDir.absolutePath();
 
   for (QString file : filesToCopy) {
     QString destination = modDir.absoluteFilePath(file);
@@ -257,12 +271,6 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
       copiedFiles.append(destination);
     }
   }
-  ON_BLOCK_EXIT([&copiedFiles] {
-    if (!shellDelete(copiedFiles)) {
-      reportError(QString("Failed to clean up after NCC installation, you may find some files "
-                     "unrelated to the mod in the newly created mod directory: %1").arg(windowsErrorString(::GetLastError())));
-    }
-  });
 
   qDebug("running %ls %ls", binary, parameters);
 
@@ -328,9 +336,20 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
 
   if ((exitCode == 0) || (exitCode == 10)) { // 0 = success, 10 = incomplete installation
     // cleanup
-    shellDelete(QStringList(modInterface->absolutePath() + "/Data"));
-    shellDelete(QStringList(modInterface->absolutePath() + "/temp"));
-    shellDelete(QStringList(modInterface->absolutePath() + "/NexusClientCLI.log"));
+    shellDelete(QStringList(modDir.absolutePath() + "/Data"));
+    shellDelete(QStringList(modDir.absolutePath() + "/temp"));
+    shellDelete(QStringList(modDir.absolutePath() + "/NexusClientCLI.log"));
+   
+    for (QString file : copiedFiles) {
+      QString destination = modDir.absoluteFilePath(file);   
+    }
+    bool rtncode1 = shellDelete(copiedFiles, true);
+    if (modDir != m_FinalTargetModDirectory) {
+      QString src = modDir.absolutePath() + "/*";
+      bool rtncode2 = shellCopy(src, m_FinalTargetModDirectory.absolutePath(), this);      
+    }
+    modDir = m_FinalTargetModDirectory;
+
   } else if (exitCode != 11) { // 11 = manually canceled
     reportError(tr("installation failed (errorcode %1)").arg(exitCode));
   }
