@@ -224,17 +224,17 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
     }
   }
   // ticket #142, use a temporary working directory where it had previously used the mod installation directory.
-  QDir m_FinalTargetModDirectory = QString::fromStdWString(QDir::toNativeSeparators(modInterface->absolutePath()).toStdWString().c_str());
-  QDir m_TempModWorkingDirectory;
-  QDir m_modDir;
+  QDir finalTargetModDirectory = QString::fromStdWString(QDir::toNativeSeparators(modInterface->absolutePath()).toStdWString().c_str());
+  QDir tempModWorkingDirectory;
+  QDir modDir;
 
   QTemporaryDir dir;
   if (dir.isValid()) {
-    m_TempModWorkingDirectory = dir.path();
-    m_modDir = m_TempModWorkingDirectory;
+    tempModWorkingDirectory = dir.path();
+    modDir = tempModWorkingDirectory;
   }
   else {
-    m_modDir = m_FinalTargetModDirectory;
+    modDir = finalTargetModDirectory;
   }
 
   // NCC doesn't always clean up the TEMP folder correctly so this force
@@ -248,7 +248,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath())).toStdWString().c_str(),
              seString.c_str(),
              QDir::toNativeSeparators(archiveName).toStdWString().c_str(),
-            QDir::toNativeSeparators(QDir::cleanPath(m_modDir.absolutePath())).toStdWString().c_str());
+            QDir::toNativeSeparators(QDir::cleanPath(modDir.absolutePath())).toStdWString().c_str());
 
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
 #pragma warning( pop )
@@ -263,7 +263,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   }
 
   QStringList copiedFiles;
-  QDir modDir = m_modDir.absolutePath();
+  //QDir modDir = m_modDir.absolutePath();
 
   for (QString file : filesToCopy) {
     QString destination = modDir.absoluteFilePath(file);
@@ -344,11 +344,11 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
       QString destination = modDir.absoluteFilePath(file);   
     }
     bool rtncode1 = shellDelete(copiedFiles, true);
-    if (modDir != m_FinalTargetModDirectory) {
+    if (modDir != finalTargetModDirectory) {
       QString src = modDir.absolutePath() + "/*";
-      bool rtncode2 = shellCopy(src, m_FinalTargetModDirectory.absolutePath(), this);      
+      bool rtncode2 = shellCopy(src, finalTargetModDirectory.absolutePath(), this);      
     }
-    modDir = m_FinalTargetModDirectory;
+    modDir = finalTargetModDirectory;
 
   } else if (exitCode != 11) { // 11 = manually canceled
     reportError(tr("installation failed (errorcode %1)").arg(exitCode));
