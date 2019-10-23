@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <imodinterface.h>
 #include "iplugingame.h"
 #include "scriptextender.h"
+#include "nccinstalldialog.h"
 
 #include <boost/assign.hpp>
 #include <boost/scoped_array.hpp>
@@ -98,7 +99,7 @@ QString InstallerNCC::description() const
 
 VersionInfo InstallerNCC::version() const
 {
-  return VersionInfo(1, 4, 0, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 5, 0, VersionInfo::RELEASE_FINAL);
 }
 
 bool InstallerNCC::isActive() const
@@ -342,10 +343,18 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
 IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &modName, QString gameName, const QString &archiveName,
                                                        const QString &version, int modID)
 {
-  bool ok;
-  modName = QInputDialog::getText(parentWidget(), tr("Confirm Mod Name"), tr("Desired mod name:"), QLineEdit::Normal, modName, &ok);
-  modName.update(modName->trimmed());
-
+  auto dialog = NccInstallDialog(modName, parentWidget());
+  if (dialog.exec() == QDialog::Rejected) {
+    if (dialog.manualRequested()) {
+      modName.update(dialog.getName(), GUESS_USER);
+      return RESULT_MANUALREQUESTED;
+    }
+    else {
+      return RESULT_CANCELED;
+    }
+  }
+  modName.update(dialog.getName().trimmed());
+  
   const IPluginGame *game = m_MOInfo->getGame(gameName);
   if (game == nullptr) {
     game = m_MOInfo->managedGame();
@@ -355,9 +364,6 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
       gameName = game->gameShortName();
     }
   }
-
-  if (!ok)
-    return RESULT_CANCELED;
 
   IModInterface *modInterface = m_MOInfo->createMod(modName);
   if (modInterface == nullptr) {
