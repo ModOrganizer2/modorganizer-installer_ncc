@@ -263,8 +263,6 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
   }
 
   QStringList copiedFiles;
-  //QDir modDir = m_modDir.absolutePath();
-
   for (QString file : filesToCopy) {
     QString destination = modDir.absoluteFilePath(file);
     if (QFile::copy(m_MOInfo->managedGame()->gameDirectory().absoluteFilePath(file), destination)) {
