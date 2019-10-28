@@ -223,8 +223,8 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
       seString = std::wstring() + L"-se \"" + seVersion + L"\"";
     }
   }
-  // ticket #142, use a temporary working directory where it had previously used the mod installation directory.
-  QDir finalTargetModDirectory = QString::fromStdWString(QDir::toNativeSeparators(modInterface->absolutePath()).toStdWString().c_str());
+  // ticket #142, use a temporary working directory where it had previously used the mod installation directory.  
+  QDir finalTargetModDirectory = modInterface->absolutePath();
   QDir tempModWorkingDirectory;
   QDir modDir;
 
@@ -248,7 +248,7 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
              QDir::toNativeSeparators(QDir::cleanPath(m_MOInfo->overwritePath())).toStdWString().c_str(),
              seString.c_str(),
              QDir::toNativeSeparators(archiveName).toStdWString().c_str(),
-            QDir::toNativeSeparators(QDir::cleanPath(modDir.absolutePath())).toStdWString().c_str());
+             QDir::toNativeSeparators(QDir::cleanPath(modDir.absolutePath())).toStdWString().c_str());
 
   _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(nccPath()).absolutePath()).c_str());
 #pragma warning( pop )
