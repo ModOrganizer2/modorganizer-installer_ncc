@@ -38,7 +38,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSettings>
 #include <QtPlugin>
 #include <QInputDialog>
-#include <Qtemporarydir> 
+#include <QTemporaryDir> 
 
 using namespace MOBase;
 
