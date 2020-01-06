@@ -82,7 +82,7 @@ private:
 
 private:
 
-  static const unsigned int COMPATIBLE_MAJOR_VERSION = 0x03;
+  static const unsigned int COMPATIBLE_MAJOR_VERSION = 0x05;
 
   static const unsigned int PROBLEM_NCCMISSING = 1;
   static const unsigned int PROBLEM_NCCINCOMPATIBLE = 2;
