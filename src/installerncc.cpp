@@ -79,6 +79,7 @@ InstallerNCC::InstallerNCC()
 bool InstallerNCC::init(IOrganizer *moInfo)
 {
   m_MOInfo = moInfo;
+  pluginShouldWork = isDotNetInstalled() && isNCCInstalled();
   return true;
 }
 
@@ -99,12 +100,12 @@ QString InstallerNCC::description() const
 
 VersionInfo InstallerNCC::version() const
 {
-  return VersionInfo(1, 5, 0, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 6, 0, VersionInfo::RELEASE_FINAL);
 }
 
 bool InstallerNCC::isActive() const
 {
-  return isDotNetInstalled() && isNCCInstalled();
+  return true;
 }
 
 QList<PluginSetting> InstallerNCC::settings() const
@@ -132,6 +133,10 @@ std::set<QString> InstallerNCC::supportedExtensions() const
 
 bool InstallerNCC::isArchiveSupported(const DirectoryTree &tree) const
 {
+  if (!pluginShouldWork) {
+    return false;
+  }
+
   for (DirectoryTree::const_node_iterator iter = tree.nodesBegin();
        iter != tree.nodesEnd(); ++iter) {
     const FileNameString &dirName = (*iter)->getData().name;
@@ -158,6 +163,10 @@ bool InstallerNCC::isArchiveSupported(const DirectoryTree &tree) const
 
 bool InstallerNCC::isArchiveSupported(const QString &archiveName) const
 {
+  if (!pluginShouldWork) {
+    return false;
+  }
+
   return archiveName.endsWith(".fomod", Qt::CaseInsensitive) ||
          archiveName.endsWith(".omod", Qt::CaseInsensitive);
 }
@@ -343,6 +352,10 @@ IPluginInstaller::EInstallResult InstallerNCC::invokeNCC(IModInterface *modInter
 IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &modName, QString gameName, const QString &archiveName,
                                                        const QString &version, int modID)
 {
+  if (!pluginShouldWork) {
+    return RESULT_FAILED;
+  }
+
   auto dialog = NccInstallDialog(modName, parentWidget());
   if (dialog.exec() == QDialog::Rejected) {
     if (dialog.manualRequested()) {
@@ -475,7 +488,7 @@ QString InstallerNCC::fullDescription(unsigned int key) const
   switch (key) {
     case PROBLEM_NCCMISSING:
       return tr("NCC is not installed. You won't be able to install some scripted mod-installers. "
-                "Get NCC from <a href=\"http://www.nexusmods.com/skyrim/mods/1334\">the MO page on nexus</a>.");
+                "There may have been problems when installing MO.");
     case PROBLEM_NCCINCOMPATIBLE:
       return tr("NCC version may be incompatible, expected version 0.%1.x.x.").arg(COMPATIBLE_MAJOR_VERSION);
     case PROBLEM_DOTNETINSTALLED: {
