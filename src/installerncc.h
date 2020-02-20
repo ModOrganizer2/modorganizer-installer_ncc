@@ -91,7 +91,7 @@ private:
 private:
 
   MOBase::IOrganizer *m_MOInfo;
-
+  bool pluginShouldWork;
 };
 
 #endif // INSTALLERNCC_H
