@@ -60,7 +60,8 @@ Based on Nexus Mod Manager by Black Tree Gaming Ltd.
     </message>
     <message>
         <location filename="installerncc.cpp" line="477"/>
-        <source>NCC is not installed. You won&apos;t be able to install some scripted mod-installers. Get NCC from &lt;a href=&quot;http://www.nexusmods.com/skyrim/mods/1334&quot;&gt;the MO page on nexus&lt;/a&gt;.</source>
+        <source>NCC is not installed. You won&apos;t be able to install some scripted mod-installers. There may have been problems when installing MO.</source>
+        <oldsource>NCC is not installed. You won&apos;t be able to install some scripted mod-installers. Get NCC from &lt;a href=&quot;http://www.nexusmods.com/skyrim/mods/1334&quot;&gt;the MO page on nexus&lt;/a&gt;.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
