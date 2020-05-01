@@ -131,30 +131,26 @@ std::set<QString> InstallerNCC::supportedExtensions() const
 }
 
 
-bool InstallerNCC::isArchiveSupported(const DirectoryTree &tree) const
+bool InstallerNCC::isArchiveSupported(std::shared_ptr<const IFileTree> tree) const
 {
   if (!pluginShouldWork) {
     return false;
   }
 
-  for (DirectoryTree::const_node_iterator iter = tree.nodesBegin();
-       iter != tree.nodesEnd(); ++iter) {
-    const FileNameString &dirName = (*iter)->getData().name;
-    if (dirName == "fomod") {
-      for (DirectoryTree::const_leaf_iterator fileIter = (*iter)->leafsBegin();
-           fileIter != (*iter)->leafsEnd(); ++fileIter) {
-        if (fileIter->getName() == "ModuleConfig.xml" ||
-            fileIter->getName() == "script.cs") {
+  for (auto entry : *tree) {
+    if (entry->isDir() && entry->compare("fomod") == 0) {
+      for (auto childEntry : *entry->astree()) {
+        if (childEntry->compare("ModuleConfig.xml") == 0
+          || childEntry->compare("script.cs") == 0) {
           return true;
         }
       }
     }
   }
-
+  
   // recurse into single directories
-  if ((tree.numNodes() == 1) && (tree.numLeafs() == 0)) {
-    DirectoryTree::Node *node = *tree.nodesBegin();
-    return isArchiveSupported(*node);
+  if (tree->size() == 1 && tree->at(0)->isDir()) {
+    return isArchiveSupported(tree->at(0)->astree());
   } else {
     return false;
   }
