@@ -390,7 +390,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
   }
   modInterface->setVersion(version);
   modInterface->setNexusID(modID);
-  modInterface->setGameName(gameName);
+  modInterface->setGamePlugin(game);
 
   EInstallResult res = invokeNCC(modInterface, game, archiveName);
 
