@@ -53,7 +53,7 @@ public: // IPluginInstaller
 
   virtual unsigned int priority() const;
   virtual bool isManualInstaller() const;
-  virtual bool isArchiveSupported(const MOBase::DirectoryTree &tree) const;
+  virtual bool isArchiveSupported(std::shared_ptr<const MOBase::IFileTree> tree) const;
 
 public: // IPluginInstallerCustom
 
