@@ -137,6 +137,10 @@ bool InstallerNCC::isArchiveSupported(std::shared_ptr<const IFileTree> tree) con
     return false;
   }
 
+  if (tree->empty()) {
+    return false;
+  }
+
   for (auto entry : *tree) {
     if (entry->isDir() && entry->compare("fomod") == 0) {
       for (auto childEntry : *entry->astree()) {
@@ -147,13 +151,18 @@ bool InstallerNCC::isArchiveSupported(std::shared_ptr<const IFileTree> tree) con
       }
     }
   }
-  
-  // recurse into single directories
-  if (tree->size() == 1 && tree->at(0)->isDir()) {
-    return isArchiveSupported(tree->at(0)->astree());
-  } else {
+
+  // If there is no subdirectory, invalid:
+  if (!tree->at(0)->isDir()) {
     return false;
   }
+
+  // If there is two or more directory, invalid:
+  if (tree->size() > 1 && tree->at(1)->isDir()) {
+    return false;
+  }
+ 
+  return isArchiveSupported(tree->at(0)->astree());
 }
 
 
