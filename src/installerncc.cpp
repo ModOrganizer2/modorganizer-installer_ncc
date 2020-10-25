@@ -410,7 +410,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
         modName.update(data.at(0), GUESS_META);
         QString newName = modName;
         if ((QString::compare(modName, modInterface->name(), Qt::CaseInsensitive) != 0) &&
-            (m_MOInfo->getMod(newName) == nullptr)) {
+            (m_MOInfo->modList()->getMod(newName) == nullptr)) {
           modInterface->setName(modName);
         }
         if (data.at(1).length() > 0) {
