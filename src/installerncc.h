@@ -42,33 +42,34 @@ public:
 public: // IPlugin
 
   virtual bool init(MOBase::IOrganizer *moInfo);
-  virtual QString name() const;
-  virtual QString author() const;
-  virtual QString description() const;
-  virtual MOBase::VersionInfo version() const;
-  virtual bool isActive() const;
-  virtual QList<MOBase::PluginSetting> settings() const;
+  virtual QString name() const override;
+  virtual QString localizedName() const override;
+  virtual QString author() const override;
+  virtual QString description() const override;
+  virtual MOBase::VersionInfo version() const override;
+  virtual QList<MOBase::IPluginRequirement*> requirements() const override;
+  virtual QList<MOBase::PluginSetting> settings() const override;
 
 public: // IPluginInstaller
 
-  virtual unsigned int priority() const;
-  virtual bool isManualInstaller() const;
-  virtual bool isArchiveSupported(std::shared_ptr<const MOBase::IFileTree> tree) const;
+  virtual unsigned int priority() const override;
+  virtual bool isManualInstaller() const override;
+  virtual bool isArchiveSupported(std::shared_ptr<const MOBase::IFileTree> tree) const override;
 
 public: // IPluginInstallerCustom
 
-  virtual std::set<QString> supportedExtensions() const;
-  virtual bool isArchiveSupported(const QString &archiveName) const;
+  virtual std::set<QString> supportedExtensions() const override;
+  virtual bool isArchiveSupported(const QString &archiveName) const override;
   virtual EInstallResult install(MOBase::GuessedValue<QString> &modName, QString gameName, const QString &archiveName,
-                                 const QString &version, int modID);
+                                 const QString &version, int modID) override;
 
 public: // IPluginDiagnose
 
-  virtual std::vector<unsigned int> activeProblems() const;
-  virtual QString shortDescription(unsigned int key) const;
-  virtual QString fullDescription(unsigned int key) const;
-  virtual bool hasGuidedFix(unsigned int key) const;
-  virtual void startGuidedFix(unsigned int key) const;
+  virtual std::vector<unsigned int> activeProblems() const override;
+  virtual QString shortDescription(unsigned int key) const override;
+  virtual QString fullDescription(unsigned int key) const override;
+  virtual bool hasGuidedFix(unsigned int key) const override;
+  virtual void startGuidedFix(unsigned int key) const override;
 
 private:
 
