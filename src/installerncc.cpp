@@ -88,6 +88,11 @@ QString InstallerNCC::name() const
   return "Fomod Installer (external)";
 }
 
+QString InstallerNCC::localizedName() const
+{
+  return tr("Fomod Installer (external)");
+}
+
 QString InstallerNCC::author() const
 {
   return "Tannin";
@@ -103,14 +108,14 @@ VersionInfo InstallerNCC::version() const
   return VersionInfo(1, 7, 0, VersionInfo::RELEASE_FINAL);
 }
 
-bool InstallerNCC::isActive() const
+QList<IPluginRequirement*> InstallerNCC::requirements() const
 {
-  return true;
+  return { Requirements::diagnose(this) };
 }
 
 QList<PluginSetting> InstallerNCC::settings() const
 {
-  return QList<PluginSetting>();
+  return {};
 }
 
 unsigned int InstallerNCC::priority() const
@@ -161,7 +166,7 @@ bool InstallerNCC::isArchiveSupported(std::shared_ptr<const IFileTree> tree) con
   if (tree->size() > 1 && tree->at(1)->isDir()) {
     return false;
   }
- 
+
   return isArchiveSupported(tree->at(0)->astree());
 }
 
@@ -372,7 +377,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
     }
   }
   modName.update(dialog.getName().trimmed());
-  
+
   const IPluginGame *game = m_MOInfo->getGame(gameName);
   if (game == nullptr) {
     game = m_MOInfo->managedGame();
