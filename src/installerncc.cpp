@@ -108,7 +108,7 @@ VersionInfo InstallerNCC::version() const
   return VersionInfo(1, 7, 0, VersionInfo::RELEASE_FINAL);
 }
 
-QList<IPluginRequirement*> InstallerNCC::requirements() const
+std::vector<std::shared_ptr<const MOBase::IPluginRequirement>> InstallerNCC::requirements() const
 {
   return { Requirements::diagnose(this) };
 }
