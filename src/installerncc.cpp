@@ -416,7 +416,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
         QString newName = modName;
         if ((QString::compare(modName, modInterface->name(), Qt::CaseInsensitive) != 0) &&
             (m_MOInfo->modList()->getMod(newName) == nullptr)) {
-          modInterface->setName(modName);
+          modInterface = m_MOInfo->modList()->renameMod(modInterface, modName);
         }
         if (data.at(1).length() > 0) {
           modInterface->setVersion(data.at(1));
@@ -428,7 +428,7 @@ IPluginInstaller::EInstallResult InstallerNCC::install(GuessedValue<QString> &mo
     }
 
   } else {
-    if (!modInterface->remove()) {
+    if (!m_MOInfo->modList()->removeMod(modInterface)) {
       qCritical("failed to remove empty mod %s", qUtf8Printable(modInterface->absolutePath()));
     }
   }
