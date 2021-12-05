@@ -455,7 +455,7 @@ bool InstallerNCC::isNCCCompatible() const
 bool InstallerNCC::isDotNetInstalled() const
 {
   return QSettings("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full",
-                   QSettings::NativeFormat).value("Release", 0) >= 393295;
+                   QSettings::NativeFormat).value("Release", 0).toInt() >= 393295;
 }
 
 QString InstallerNCC::nccPath() const

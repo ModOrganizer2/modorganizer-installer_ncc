@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLineEdit>
 
 #include <QComboBox>
+#include <QCompleter>
 
 using namespace MOBase;
 
@@ -38,7 +39,7 @@ NccInstallDialog::NccInstallDialog(const GuessedValue<QString> &preset, QWidget 
   ui->nameCombo->setCurrentIndex(ui->nameCombo->findText(preset));
 
   setWindowFlags(windowFlags() & (~Qt::WindowContextHelpButtonHint));
-  ui->nameCombo->setAutoCompletionCaseSensitivity(Qt::CaseSensitive);
+  ui->nameCombo->completer()->setCaseSensitivity(Qt::CaseSensitive);
 }
 
 NccInstallDialog::~NccInstallDialog()
